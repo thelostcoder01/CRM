@@ -1,11 +1,11 @@
-Structure
-engine/
-├── style.css   # Contains all CSS styling for the project
-└── main.js     # Contains all JavaScript functionality
+Structure <br>
+engine/ <br>
+├── style.css   # Contains all CSS styling for the project <br>
+└── main.js     # Contains all JavaScript functionality <br>
 CRM.html
 
-<link rel="stylesheet" href="engine/style.css">
-<script src="engine/main.js"></script>
+link rel="stylesheet" href="engine/style.css" <br>
+script src="engine/main.js"
 
 Notes:
 Keep all engine-related files inside this folder to maintain project structure.
