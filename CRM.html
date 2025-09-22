@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="./engine/style.css">
+    <title>CRM</title>
+</head>
+<body>
+<nav class="navbar navbar-expand-lg navbar-light bg-white border-bottom">
+  <div class="container">
+    <a class="navbar-brand fw-bold" href="#">CRM (Offline)</a>
+    <div>
+      <button class="btn btn-outline-primary me-2" id="btnBackup">Export JSON</button>
+      <button class="btn btn-outline-secondary" id="btnRestore">Import JSON</button>
+    </div>
+  </div>
+</nav>
+
+<div class="container py-4">
+  <div class="row">
+    <div class="col-md-3 mb-3">
+      <div class="card card-panel p-3">
+        <h5>Menu</h5>
+        <ul class="nav flex-column" id="menu">
+          <li class="nav-item"><a class="nav-link active" data-target="dashboard">Dashboard</a></li>
+          <li class="nav-item"><a class="nav-link" data-target="customers">Customers</a></li>
+          <li class="nav-item"><a class="nav-link" data-target="items">Items</a></li>
+          <li class="nav-item"><a class="nav-link" data-target="create-sale">Create Sale</a></li>
+          <li class="nav-item"><a class="nav-link" data-target="payments">Record Payment</a></li>
+          <li class="nav-item"><a class="nav-link" href="#balances">Balances</a></li>
+          <!--<li class="nav-item"><a class="nav-link" data-target="reports">Reports</a></li>-->
+          <li class="nav-item"><a class="nav-link text-danger" id="clearSite">Clear All Data</a></li>
+        </ul>
+        <hr>
+        <p class="small-muted">Data stored locally in your browser using <strong>IndexedDB</strong>. Not synced. Export JSON to backup.<br>Clearing site data will delete records.</p>
+      </div>
+    </div>
+
+    <div class="col-md-9">
+      <!-- Dashboard -->
+      <div class="card p-3 mb-3 page" id="dashboard">
+        <div class="d-flex justify-content-between align-items-start">
+          <div>
+            <h4>Dashboard</h4>
+            <p class="small-muted">Offline CRM. Create customers, items, sales and payments.</p>
+          </div>
+          <div class="text-end">
+            <div class="text-muted">Local DB: <span id="dbStatus">Not initialized</span></div>
+            <div class="small-muted">Last backup: <span id="lastBackup">-</span></div>
+          </div>
+        </div>
+        <hr>
+        <div class="row gy-3">
+          <div class="col-md-4">
+            <div class="card p-3">
+              <h6>Total Customers</h6>
+              <div class="h3" id="statCustomers">0</div>
+            </div>
+          </div>
+          <div class="col-md-4">
+            <div class="card p-3">
+              <h6>Total Items</h6>
+              <div class="h3" id="statItems">0</div>
+            </div>
+          </div>
+          <div class="col-md-4">
+            <div class="card p-3">
+              <h6>Outstanding Receivables</h6>
+              <div class="h3 text-danger" id="statReceivables">0.00</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Customers Page -->
+      <div class="card p-3 mb-3 page d-none" id="customers">
+        <div class="d-flex justify-content-between align-items-center">
+          <h4>Customers</h4>
+          <button class="btn btn-sm btn-primary" id="addCustomerBtn">Add Customer</button>
+        </div>
+        <hr>
+        <div id="customersList"></div>
+      </div>
+
+      <!-- Items Page -->
+      <div class="card p-3 mb-3 page d-none" id="items">
+        <div class="d-flex justify-content-between align-items-center">
+          <h4>Items</h4>
+          <button class="btn btn-sm btn-primary" id="addItemBtn">Add Item</button>
+        </div>
+        <hr>
+        <div id="itemsList"></div>
+      </div>
+
+      <!-- Create Sale Page -->
+      <div class="card p-3 mb-3 page d-none" id="create-sale">
+        <h4>Create Sale</h4>
+        <hr>
+        <form id="saleForm">
+          <div class="mb-3">
+            <label class="form-label required">Customer</label>
+            <select class="form-select" id="saleCustomer" required></select>
+          </div>
+
+          <div class="table-responsive mb-3">
+            <table class="table table-sm align-middle" id="saleTable">
+              <thead><tr><th>Item</th><th>Qty</th><th>Unit Price</th><th>GST %</th><th>Line Total</th><th></th></tr></thead>
+              <tbody></tbody>
+            </table>
+          </div>
+          <div class="mb-3">
+            <button class="btn btn-sm btn-secondary" type="button" id="addSaleRow">Add Row</button>
+          </div>
+          <div class="d-flex justify-content-end gap-3">
+            <div><strong>Total GST:</strong> ₹ <span id="saleTotalGst">0.00</span></div>
+            <div><strong>Grand Total:</strong> ₹ <span id="saleGrandTotal">0.00</span></div>
+            <button class="btn btn-primary" type="submit">Save Sale</button>
+          </div>
+        </form>
+      </div>
+
+      <!-- Payments Page -->
+      <div class="card p-3 mb-3 page d-none" id="payments">
+        <h4>Record Payment</h4>
+        <hr>
+        <form id="paymentForm">
+          <div class="mb-3">
+            <label class="form-label required">Customer</label>
+            <select class="form-select" id="paymentCustomer" required></select>
+          </div>
+          <div class="mb-3">
+            <label class="form-label required">Amount</label>
+            <input class="form-control" id="paymentAmount" type="number" step="0.01" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Link Sale (optional)</label>
+            <select class="form-select" id="paymentSale"><option value="">-- none --</option></select>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Note</label>
+            <input class="form-control" id="paymentNote">
+          </div>
+          <div class="d-flex justify-content-end">
+            <button class="btn btn-primary">Save Payment</button>
+          </div>
+        </form>
+      </div>
+
+      <!-- Balances Section -->
+      <div id="balances" class="card p-3 mb-3 page d-none">
+        <h2>Customer Balances</h2>
+        <table class="table table-striped">
+          <thead>
+            <tr>
+              <th>Customer Name</th>
+              <th>Total Sales</th>
+              <th>Total Payments</th>
+              <th>Net Balance</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="balancesTable"></tbody>
+        </table>
+      </div>
+
+      <!-- Reports Page 
+      <div class="card p-3 mb-3 page d-none" id="reports">
+        <h4>Reports</h4>
+        <hr>
+        <div class="row">
+          <div class="col-md-6">
+            <h6>Monthly GST</h6>
+            <form id="monthlyReportForm">
+              <div class="input-group mb-2"><input class="form-control" id="monthYear" placeholder="YYYY-MM" required></div>
+              <button class="btn btn-primary btn-sm">Generate</button>
+            </form>
+            <div id="monthlyReportResult" class="mt-3"></div>
+          </div>
+          <div class="col-md-6">
+            <h6>Quarterly GST (Q1 = Apr-Jun)</h6>
+            <form id="quarterReportForm">
+              <div class="input-group mb-2">
+                <select class="form-select" id="quarterSelect">
+                  <option value="1">Q1 (Apr-Jun)</option>
+                  <option value="2">Q2 (Jul-Sep)</option>
+                  <option value="3">Q3 (Oct-Dec)</option>
+                  <option value="4">Q4 (Jan-Mar)</option>
+                </select>
+                <input class="form-control" id="quarterYear" placeholder="YYYY" required>
+              </div>
+              <button class="btn btn-primary btn-sm">Generate</button>
+            </form>
+            <div id="quarterReportResult" class="mt-3"></div>
+          </div>
+        </div>
+      </div>-->
+
+    </div>
+  </div>
+</div>
+
+<footer class="container text-center">
+  <small class="text-muted"><strong>Note:</strong> This CRM is intended for recording sales and customer information only. 
+    <br>It may not be fully compliant with GST or other government regulations in India. 
+    <br>Users are responsible for ensuring legal compliance when using this software.
+    <br><strong>Developed by Md Sadik Ansari.</strong>
+  </small>
+</footer>
+
+<!-- Modals -->
+<div class="modal fade" id="entityModal" tabindex="-1">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header"><h5 class="modal-title" id="entityModalTitle"></h5><button class="btn-close" data-bs-dismiss="modal"></button></div>
+      <div class="modal-body" id="entityModalBody"></div>
+    </div>
+  </div>
+</div>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script defer src="./engine/main.js"></script>
+</body>
+</html>
